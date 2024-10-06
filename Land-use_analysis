@@ -1,0 +1,325 @@
+##land-use analysis
+##Housing housing related poi, including real estate and construction: 3 21
+##Trans traffic 22 (maybe add 23 and 24)
+##Leisure: entertainment, sports and resorts: 29 31 32
+##Consumption: mall, sports related stores and car related: 30 34 36
+##Residence: live related, education, medical: 35, 37, 33
+##Work: bank, business, professions, government agencies: 20, 19, 28, 38
+
+###Shapley how these factors expalin the population distribution
+
+#combined_save<-combined_data
+combined_data<-list()
+for (city in cl) {
+  combined_data[[city]]<-rbind(nndata16[[city]],nndata19[[city]],nndata20[[city]],nndata22[[city]])
+}
+
+
+#cdf<-combined_data
+#cdf<-do.call(rbind, cdf)
+cdf<-do.call(rbind,combined_data)
+cl
+cdf<-cdf[cdf$urban%in%c("東京二十三区","大阪市","名古屋市","京都市","横浜市","札幌市"),]
+symbol<-"Q"
+cdf$housing<-rowSums(cdf[,c(paste0(symbol,c(3,21)))])
+#cdf$trans<-rowSums(cdf[,c(paste0(symbol,c(22,23,24)))])
+cdf$trans<-cdf[,c(paste0("D",c(22)))]
+cdf$leisure<-rowSums(cdf[,c(paste0(symbol,c(29,31,32,34)))])
+cdf$consum<-rowSums(cdf[,c(paste0(symbol,c(30,34,36)))])
+cdf$resi<-rowSums(cdf[,c(paste0(symbol,c(21,35,37,33)))])
+cdf$work<-rowSums(cdf[,c(paste0(symbol,c(20,19,28,38)))])
+cdf$D22
+#plot(cdf$D22,cdf$work)
+#abline(cdf$D22,cdf$resi)
+
+combined_save<-split(cdf[,c("lon","lat","pop","housing","trans","leisure","consum","resi","work","year","urban")],cdf$urban)
+vs<-c("leisure","resi","trans","work")
+variable_goal<-"work"
+for (variable_goal in vs) {
+variables<-c(vs,c("lon","lat"))
+#variables<-c(variable_goal,c("lon","lat"))
+gwr_result<-list()
+city<-"仙台市"
+cl<-names(combined_save)
+
+for (city in cl) {
+  cdf<-combined_save
+  scdf<-cdf[[city]]
+#  variables<-coef_list[[city]]
+  gwrformula<-formula(paste("pop~" , paste(variables,collapse="+")))
+ 
+  #  scdf<-scdf[scdf$pop>0,]
+#  scdf[is.na(scdf)]<-0
+  coordinates(scdf)<- ~lon+lat
+ 
+ 
+  for (year in years) {
+    gwrdf <- scdf[scdf$year == year, ]
+   
+    # Use tryCatch to handle any errors in GWR processing
+    result <- tryCatch({
+     
+      # Bandwidth selection with cross-validation
+      bw_cv <- bw.gwr(gwrformula, data = gwrdf, approach = "CV", kernel = "bisquare", adaptive = TRUE)
+     
+      # Fit GWR model
+      gwr_model <- gwr.basic(gwrformula, data = gwrdf, bw = bw_cv, kernel = "bisquare", adaptive = TRUE)
+     
+      # Calculate VIF (Variance Inflation Factor)
+      #vif_model <- vif(lm(gwrformula, data = gwrdf))
+      #print(vif_model)
+     
+      # If the model ran successfully, store the result
+      listname <- paste0(city, "_", year)
+      gwr_result[[listname]] <- gwr_model
+     
+    }, error = function(e) {
+      # Handle the error: print message and skip this iteration
+      listname <- paste0(city, "_", year)
+      gwr_result[[listname]] <- c("error")
+      return(NULL)  # Skip to next iteration if GWR fails
+    })
+  }
+ 
+}
+gwr_landuse<-gwr_result
+#View(gwr_landuse)
+h=1
+j=1
+data<-gwr_result
+listname<-names(data)
+R2_table<-data.frame()
+coef_table<-data.frame()
+
+for (i in listname){
+  cdf<-data[[i]]
+  scdf<-as.data.frame(cdf$SDF)
+  varname<-unlist(strsplit(i,split = "_"))
+  #通过i中抽取出的城市名，去coef_list里找变量
+  var_vector<-c(coef_list[[varname[1]]])
+  variable<-var_vector[2]
+  for (variable in variables) {
+    coef_table[h,"var"]<-variable
+    coef_table[h,"city"]<-varname[1]
+    coef_table[h,"year"]<-varname[2]
+    coef_table[h,"significance"]<-length(which(abs(scdf[,paste0(variable,"_TV")])>1.56)==TRUE)/length(scdf[,1])    
+    coef_table[h,"mean"]<-mean(scdf[,variable])
+    coef_table[h,"median"]<-median(scdf[,variable])
+    coef_table[h,"bot25"]<-quantile(scdf[,variable],probs = 0.25)
+    coef_table[h,"top25"]<-quantile(scdf[,variable],probs = 0.75)
+    coef_table[h,"sd"]<-sd(scdf[,variable])
+    h=h+1
+  }
+ 
+  variable<-"Local_R2"
+  R2_table[j,"var"]<-variable
+  R2_table[j,"city"]<-varname[1]
+  R2_table[j,"year"]<-varname[2]
+  # R2_table[j,"significance"]<-length(which(abs(scdf[,paste0(variable,"_TV")])>1.56)==TRUE)/length(scdf[,1])    
+  R2_table[j,"mean"]<-mean(scdf[,variable])
+  R2_table[j,"median"]<-median(scdf[,variable])
+  R2_table[j,"bot25"]<-quantile(scdf[,variable],probs = 0.25)
+  R2_table[j,"top25"]<-quantile(scdf[,variable],probs = 0.75)
+  R2_table[j,"sd"]<-sd(scdf[,variable])
+  j=j+1
+ 
+}
+assign(paste0("coef_",variable_goal),coef_table)
+assign(paste0("R2_",variable_goal),R2_table)
+}
+
+coef_landuse<-coef_table
+mean(R2_landuse$mean[R2_landuse$year==22])
+R2_landuse<-R2_table
+top<-c("東京二十三区","大阪市","名古屋市")
+variable<-"leisure"
+plotdata<-get(paste0("coef_",variable))
+ggplot(data=plotdata[plotdata$var==variable,],
+       aes(x=as.numeric(year),y=mean,group=city,color=city))+
+  geom_point()+geom_line()+labs(x="year",y=variable)
+ggplot(data=coef_landuse[coef_landuse$var==variable,],
+       aes(x=as.numeric(year),y=mean,group=city,color=city))+
+  geom_point()+geom_line()+labs(x="year",y=variable)
+
+ggplot(data=coef_landuse[coef_landuse$var==variable&coef_landuse$city%in%top,],
+       aes(x=as.numeric(year),y=mean,group=city,color=city))+
+        geom_point()+geom_line()
+
+
+
+mean(R2_table$mean[R2_table$year==19])
+variables
+mean(coef_table$significance[coef_table$year==22&
+                  coef_table$var=="work"]
+)
+mean(data19$pop)
+mean(data16$pop)
+#gwr_landuse<-gwr_result
+cdf<-gwr_landuse
+for (year in years) {
+  name<-names(cdf)
+  select<-name[grep(year,name)]
+  assign(paste0("city",year),gsub(paste0("_", year), "", select))
+}
+landuse<-variables
+cdf<-gwr_landuse
+yp
+year<-1
+
+
+for (year in 1:(yp-1)) {
+  yearpair<-c(19,22)
+  yearpair<-c(years[year],years[year+1])
+ 
+  intersection<-intersect(get(paste0("city",yearpair[1])),get(paste0("city",yearpair[2])))
+  citylist1<-paste0(intersection,"_",yearpair[1])
+  citylist2<-paste0(intersection,"_",yearpair[2])
+  #city<-1
+  outcome<-list()
+  for (city in intersection) {
+    city1<-paste0(city,"_",yearpair[1])
+    city2<-paste0(city,"_",yearpair[2])
+    cdf1<-cdf[[city1]]$SDF
+   
+    cdf1<-data.frame(cdf1[,!names(cdf1)%in%c("lon","lat")])
+    cdf2<-cdf[[city2]]$SDF
+    cdf2<-data.frame(cdf2[,!names(cdf2)%in%c("lon","lat")])
+    coord1<-cdf1[,c("lon","lat")]
+    coord2<-cdf2[,c("lon","lat")]
+    names(cdf1)<-paste0(names(cdf1),"_",yearpair[1])
+    names(cdf2)<-paste0(names(cdf2),"_",yearpair[2])
+    names(cdf1)
+   
+    #coname1<-c(paste0("lon.1_", yearpair[1]), paste0("lat.1_", yearpair[1]))
+    #coname2<-c(paste0("lon.1_", yearpair[2]), paste0("lat.1_", yearpair[2]))
+  #mergedata<-merge(cdf1, cdf2,
+  #                   by.x = c(paste0("lon.1_", yearpair[1]), paste0("lat.1_", yearpair[1])),
+  #                   by.y = c(paste0("lon.1_", yearpair[2]), paste0("lat.1_", yearpair[2])))
+      mergedata<-merge(cdf1, cdf2,
+                      by.x = c(paste0("lon_", yearpair[1]), paste0("lat_", yearpair[1])),
+                     by.y = c(paste0("lon_", yearpair[2]), paste0("lat_", yearpair[2])))
+    varname<-landuse
+    varname<-varname[!varname%in%c("lon","lat")]
+    #varname<-coef_list[[city]]
+    for (variable in varname) {
+      vecname<-paste0("ratio_",variable)
+      vecname1<-paste0(variable,"_",yearpair[1])
+      vecname2<-paste0(variable,"_",yearpair[2])
+      mergedata[,vecname]<-mergedata[,vecname2]/mergedata[,vecname1]
+      z<-(mergedata[,vecname1]-mergedata[,vecname2])/sqrt(mergedata[,paste0(variable,"_SE_",yearpair[1])]^2+
+                                                            mergedata[,paste0(variable,"_SE_",yearpair[2])]^2)
+      vecname<-paste0("zdiff_",variable)
+      mergedata[,vecname]<-z
+      names(mergedata)[1:2]<-c("lon","lat")
+    }
+    outcome[[city]]<-mergedata
+  }
+  names(mergedata)
+ 
+  #variable<-varname[1]
+  assign(paste0("coef_compare",yearpair[1],yearpair[2]),outcome)
+}
+cdf<-coef_compare1920$東京二十三区
+mean(cdf$zdiff_work)
+
+result<-data.frame()
+year<-1
+h=1
+for (year in 1:(yp-1)) {
+  yearpair<-c(19,22)
+  yearpair<-c(years[year],years[year+1])
+ 
+  cdf<-get(paste0("coef_compare",yearpair[1],yearpair[2]))
+  cl<-names(cdf)
+  for (city in cl) {
+  scdf<-cdf[[city]]  
+  variables<-landuse[!landuse%in%c("lon","lat")]
+  for (variable in variables) {
+    result[h,"year"]<-paste0(yearpair[1],yearpair[2])
+    result[h,"city"]<-city
+    result[h,"var"]<-variable
+    result[h,"zdiff"]<-mean(scdf[,paste0("zdiff_",variable)])
+    result[h,"sigposi"]<-sum(scdf[,paste0("zdiff_",variable)]>1.28)/length(scdf[,1])
+    result[h,"signega"]<-sum(scdf[,paste0("zdiff_",variable)]<(-1.28))/length(scdf[,1])
+    result[h,"sig"]<-sum(abs(scdf[,paste0("zdiff_",variable)])>1.28)/length(scdf[,1])
+    coords<-scdf[,c("lon","lat")]
+    knn<-knearneigh(coords, k=8)
+    nb <- knn2nb(knn)
+    lw <- nb2listw(nb, style = "W")
+    moran_result <- moran.test(scdf[,paste0("zdiff_",variable)], lw)
+    result[h,"moran"]<-moran_result$estimate[1]
+    h=h+1
+    }
+ 
+  }
+}
+
+assign("zdiff_table",result)
+zdiff_table[zdiff_table$var=="consum",]
+View(zdiff_table)
+write.csv(zdiff_table,"zdiff_table.csv")
+
+cdf<-zdiff_table[zdiff_table$year==1619,]
+ba<-zdiff_table[zdiff_table$year==1619|zdiff_table$year==1922,]
+ba$sig
+ba$sig[ba$year==1619]-ba$sig[ba$year==1922]
+ggplot(data=ba[ba$var=="resi",],aes(x=year,y=sig,group=city,color=city))+geom_point()+geom_line()
+variable<-"work"
+mean(ba$zdiff[ba$year==1619&ba$var==variable])
+mean(ba$zdiff[ba$year==1922&ba$var==variable])
+cor(ba$zdiff[ba$year==1922&ba$var==variable],ba$zdiff[ba$year==1619&ba$var==variable])
+
+table16<-merge(variable_statsitics[variable_statsitics$year==16,],
+                              zdiff_table[zdiff_table$year==1619,],by=c("city","var"))
+
+table19<-merge(variable_statsitics[variable_statsitics$year==19,],
+               zdiff_table[zdiff_table$year==1922,],by=c("city","var"))
+#View(table16)
+landuse
+variable<-"consum"
+#View(table16)
+cor(table16$mean[table16$var==variable],table16$signega[table16$var==variable])
+cor(table19$mean[table19$var==variable],table19$signega[table19$var==variable])
+combined_data
+variable<-"resi"
+plotdata<-coef_table[coef_table$var==variable,]
+names(plotdata)
+ggplot(data=plotdata,aes(x=as.numeric(year),y=mean,group=city,color=city))+
+  geom_point()+geom_line()
+table(plotdata$city)
+
+
+###variable change, and population moran and so on
+result<-data.frame()
+year<-16
+h=1
+variables<-c("housing","work","resi","leisure","consum","trans","pop")
+cdf
+for (city in cl) {
+  df<-combined_save
+  cdf<-df[[city]]  
+  for (year in years) {
+    scdf<-cdf[cdf$year==year,]
+    for (variable in variables) {
+      result[h,"year"]<-year
+      result[h,"city"]<-city
+      result[h,"var"]<-variable
+      result[h,"mean"]<-mean(scdf[,variable])
+      result[h,"hhi"]<-sum((scdf[,variable]/sum(scdf[,variable]))^2)
+      result[h,"ineq"]<-ineq(scdf[,variable],type = "Gini")
+#      coords<-scdf[,c("lon","lat")]
+#      knn<-knearneigh(coords, k=8)
+#      nb <- knn2nb(knn)
+#      lw <- nb2listw(nb, style = "W")
+#      moran_result <- moran.test(scdf[,variable], lw)
+#      result[h,"moran"]<-moran_result$estimate[1]
+      h=h+1
+    }
+   
+  }
+}
+variable_statsitics<-result
+variable_statsitics<-arrange(variable_statsitics,c(var))
+View(variable_statsitics)
+sum(data16[,],na.rm = TRUE)
+write.csv(variable_statsitics,"variable_statistics.csv")
