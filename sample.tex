@@ -1,0 +1,207 @@
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+\usetheme{SimplePlus}
+\usepackage{threeparttable}
+\usepackage{caption}
+\usepackage{chngcntr}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+
+\counterwithin{table}{section}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs}
+\title[short title]{How the COVID-19 pandemic affects people's lifestyle: empirical evidence from Japan} % The short title appears at the bottom of every slide, the full title is only on the title page
+\author[Pin-Yen] {Dongyuan Mu}
+
+\institute[NTU] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+	Graduate School of Economics\\
+	University of Tokyo 
+}
+\date{\today} % Date, can be changed to a custom date
+
+
+\begin{document}
+
+	\begin{frame}
+		\maketitle
+	\end{frame}
+\begin{frame}{Bacngound}
+		The COVID-19 widespreaded from 2020 alter people's life. Various studies discussing the declining commuting to the CBD and the flattening housing price curve with respect to the distance to the CBD.\par 
+		Even though the COVID-19 officially end, at least in Japan, the outcome after the pandemic and how people's preference affected by the pandemic is still a debate. Instead of providing theoretical insights, this study employs latest and fine datasets in Japan, including the popualtion density data and the amenity informations, we investigate which amenities affect the urban structures and how these amenities' change along the time, especially regarding the peiords during and after the pandemic.
+\end{frame}
+\begin{frame}{Data}
+\begin{itemize}
+	\item Population density data: LandScan (1km $\times$ 1km, and about 300 thousand per year for Japan).
+	\item Amenity location data: TelPoint from CSIS in University of Tokyo (5 million after cleaning per year). 
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Empirical strategies}
+	This study will go through the following empirical procedure:
+	\begin{itemize}
+	\item \textbf{Part one:} Which specific amenity types perform best on predicting the population density in Japanese cities and how fitness of these amenities.
+\begin{itemize}
+	\item LASSO is employed to select the ``important'' amenity types that contribute to the prediction.
+	\item The measures of accessibility to POI vary in different forms. This study employ two kinds of measure: the variety of POI within grid, and gravity-based measure.
+\end{itemize}
+\item \textbf{Part two:} After discussing specific amenity types, this part dividing the types into several categories based on the land-use, such as commercial, medical, work, and entertainment. Then, conducting the GWR, we can investigate the preference changes towards these land-use.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Methodology}
+	\begin{itemize}
+	\item Step two: GWR regression:
+\begin{itemize}
+	\item After selecting the variables, I run GWR for each city in every year.
+	\item To control some unobservable spatial heterogeneity, I add the coordinates into the GWR as well. The general regression can be shown as the follows:
+	\begin{equation}
+	Pop_{i}=f_i(selected\ variables; lon, lat)+\epsilon
+	\end{equation}
+\end{itemize}
+	\end{itemize}
+{\large Analysis objectives: }\\
+	Cities have over 500 thousand people.
+\end{frame}
+
+\begin{frame}{Measure of amenity accessibility}
+	Various papers discuss the amenities' influence on the population density. However, dealing with different objectives requires different \textbf{measure} of amenities.\par 
+	There are several popular measures:
+	\begin{itemize}
+		\item \textbf{Plain measure $q^p_{i}$.}\par 
+		{\small This study employs the variety of of amenity type $p$ within grid \textit{i}}.
+		\item \textbf{Gravity-based accessibility measure}.\par 
+		{\small Considering the amenity type \textit{p} in the neighbors to the grid \textit{i}:}
+		\begin{equation}
+			A_i^p=\sum_{j\neq i}\frac{q_j^p}{f(d_{ij})}
+		\end{equation}where the $f(d_{ij})$ is the weight/gravity factor of impacts from \textit{j} to \textit{i}, and $q^p_{j}$ is the quantity of amenity \textit{p} in grid \textit{j}. 
+		\item \textbf{Summarize amenities regarding land-use}. \par 
+		{\small Summarize amenities that have similar functions together, like dividing the amenities into traffic, commercial and so on.}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Methodology: variable selection}
+	To investigate which amenity types are important to describe the population distribution, this study employs LASSO to ensure a robust variable selectiion.
+	\par 
+		\begin{itemize}
+			\item The LASSO equation is conducted by regressing accessibility measures of all types of grid $i$ on its population density.
+			\item LASSO is conducted for two waves: in the first wave, every single city, containing observations in all periods to select the \textbf{in-average} most important amenities in the whole sample periods. The second wave conducts the LASSO for every city in every year.
+			\item Set the desirable variable set size, and let LASSO to select these variables. The survival variables are regarded as the important amenity types.
+		\end{itemize}
+\end{frame}
+
+\begin{frame}{Potential problems}
+	There are some potential technical issues:
+	\begin{itemize}
+		\item Local collinearity: it makes GWR fail in some cities.(Can be solved by employing gravity-based measure on some extent.)
+		\item Endogeneity: it can be the case that the population draw investors' attention to build amenities.
+		\item LASSO's limitation: the LASSO selection can suffer from several technical issues: like appearing to select only one variable from the correlated.
+		\item \textbf{The most tough problem now is the selection of decay function of accessibility measure.}
+	\end{itemize}
+\end{frame}
+\begin{frame}{Analysis: important amenities (plain)}
+First and foremost, summarizing the LASSO's variable selection. I set the selection size as 6. The results are shown in the following table:
+\begin{table}[]
+	\begin{tabular}{lr}\toprule
+		Amenity types & Frequency by LASSO \\
+		\hline 
+		Medical       & 33                 \\
+		Real estate   & 26                 \\
+		Live-related  & 22                 \\
+		School        & 22                 \\
+		Construction  & 18                \\\bottomrule
+	\end{tabular}
+\end{table}
+\end{frame}
+\begin{frame}{Analysis: important amenities by years}
+	I run LASSO for every city in different years.
+	The results reveal disordered preference during the pandemic period. There is no stable and globally important amenities like medical institutes in the other years.
+	\begin{table}[]\small 
+		\begin{tabular}{llllllll}\toprule
+			2016         & Freq. & 2019         & Freq. & 2020 & Freq. & 2022         & Freq. \\\hline 
+			Medical      & 30        & Medical      & 31        & Medical   & 29        & Medical      & 32        \\
+			Real estate  & 29        & Real estate & 29        & Real estate    & 29        & Real estate  & 31        \\
+			Construction & 25        & Construction & 24        & Construction   & 27        & Construction & 25        \\
+			Live-related & 25        & Life-related  & 24        & Life-related   & 22         & Live-related & 25        \\
+			School       & 24        & School       & 23        & School    & 22         & School       & 25       \\\bottomrule
+		\end{tabular}
+	\end{table}
+The LASSO select similar variables in the different years.
+\end{frame}
+\begin{frame}{Analysis: GWR performance}
+	I summarize the R-squared of GWR in the following table to show the performance of selected variable by LASSO.
+	\begin{table}[]
+		\begin{tabular}{l|llll}
+			\hline 
+			& 2016   & 2019   & 2020   & 2022   \\
+			\midrule 
+			Rank & Mean   & Mean   & Mean   & Mean   \\
+			\hline 
+			Year average&0.7831&0.7843&0.7830&0.7821\\\bottomrule
+		\end{tabular}
+	\end{table}
+The GWR performance with selected variables is stable among the sample period, even in the COVID-19 pandemic 2020.
+\end{frame}
+\begin{frame}{Divide POI by functions}
+	From this on, I show the results of land-use analysis. I select several important amenities and divide them into four categories:
+	\begin{itemize}
+	\item Traffic: Distance to the closest metrostation.
+	\item Leisure: entertainment, gyms, resorts and shopping mall: 31 29 32 35. 
+	\item Residence: real estate stores, live-related, education, medical: 21 ,35, 37, 33
+	\item Work: bank, business, professions, government agencies: 20, 19, 28, 38
+	\end{itemize}
+\end{frame}
+\begin{frame}{Statistic summary}
+	In all, there is no obvious changes in the variable statistics of six landuses.\par 
+	In addition, if we look at the city-level average of each coefficients, the change is not that significant as well.
+\end{frame}
+\begin{frame}{}
+	
+\end{frame}
+\begin{frame}{Analysis framework}
+To the concern of potential heterogeneity between cities, I divide the 32 cities into top cities, including Tokyo, Nagoya, Yokohama, Osaka, Sapporo, and the other cities.\par 
+	In the analysis, I mainly show results in the following aspects:
+\begin{itemize}
+	\item How each variable explain the population distribution? (By regression-based Shapley decomposition)
+	\item How do the coefficients change along the time? (Containing average coefficient changes, significance changes, average z-statistics)
+	\item Do the changes have any spacial traits? (Revealed by concetration and spatial clustering analyssis)
+	\item Do the changes related to the areas themselves. (Conlucded by correlation analysis between POI and coefficient changes.)
+\end{itemize}
+\end{frame}
+\begin{frame}{Shapley decomposition}
+	I decompose the R-squared of OLS regression of population density on the six-category land-use framework. The results are shown in the following:
+	\begin{figure}
+	\includegraphics[width=0.7\textwidth]{SD.png}
+	\end{figure}	\end{frame}
+\begin{frame}{Coefficient changes: tokyo resi}
+\begin{figure}
+	\includegraphics[width=0.7\textwidth]{resi_tokyo.png}
+\end{figure}
+\end{frame}
+\begin{frame}{Coefficient changes: tokyo trans}
+	\begin{figure}
+		\includegraphics[width=0.7\textwidth]{trans_tokyo.png}
+	\end{figure}
+\end{frame}
+\begin{frame}{Coefficient changes: tokyo housing}
+	\begin{figure}
+		\includegraphics[width=0.7\textwidth]{housing_tokyo.png}
+	\end{figure}
+\end{frame}
+\begin{frame}{Coefficient changes: tokyo leisure}
+	\begin{figure}
+		\includegraphics[width=0.7\textwidth]{leisure_tokyo.png}
+	\end{figure}
+\end{frame}
+\begin{frame}{Coefficient changes: tokyo consum}
+	\begin{figure}
+		\includegraphics[width=0.7\textwidth]{consum_tokyo.png}
+	\end{figure}
+\end{frame}
+
+	%----------------------------------------------------------------------------------------
+\end{document}
