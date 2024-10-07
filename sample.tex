@@ -35,11 +35,15 @@
 		The COVID-19 widespreaded from 2020 alter people's life. Various studies discussing the declining commuting to the CBD and the flattening housing price curve with respect to the distance to the CBD.\par 
 		Even though the COVID-19 officially end, at least in Japan, the outcome after the pandemic and how people's preference affected by the pandemic is still a debate. Instead of providing theoretical insights, this study employs latest and fine datasets in Japan, including the popualtion density data and the amenity informations, we investigate which amenities affect the urban structures and how these amenities' change along the time, especially regarding the peiords during and after the pandemic.
 \end{frame}
-\begin{frame}{Data}
+\begin{frame}{Data and study area}
+	
+{\large \textbf{Data source:}}
 \begin{itemize}
 	\item Population density data: LandScan (1km $\times$ 1km, and about 300 thousand per year for Japan).
 	\item Amenity location data: TelPoint from CSIS in University of Tokyo (5 million after cleaning per year). 
-\end{itemize}
+\end{itemize}\vspace{0.5em}
+{\large \textbf{Study area:}}\\
+In addition, I select the cities in Japan that has over 400 thousand people in 2019. As a result, there are 32 cities are selected as the study areas, including Tokyo, Osaka, Kobe, Sapporo, Hukuoka, Kyoto and so on.
 \end{frame}
 
 \begin{frame}{Empirical strategies}
@@ -50,7 +54,7 @@
 	\item LASSO is employed to select the ``important'' amenity types that contribute to the prediction.
 	\item The measures of accessibility to POI vary in different forms. This study employ two kinds of measure: the variety of POI within grid, and gravity-based measure.
 \end{itemize}
-\item \textbf{Part two:} After discussing specific amenity types, this part dividing the types into several categories based on the land-use, such as commercial, medical, work, and entertainment. Then, conducting the GWR, we can investigate the preference changes towards these land-use.
+\item \textbf{Part two:} After discussing specific amenity types, this part dividing the types into several categories based on their functions, such as commercial, medical, work, and entertainment. Then, conducting the GWR, we can investigate the preference changes towards these land-use.
 	\end{itemize}
 \end{frame}
 \begin{frame}{Methodology}
@@ -64,15 +68,14 @@
 	\end{equation}
 \end{itemize}
 	\end{itemize}
-{\large Analysis objectives: }\\
-	Cities have over 500 thousand people.
+
 \end{frame}
 
 \begin{frame}{Measure of amenity accessibility}
 	Various papers discuss the amenities' influence on the population density. However, dealing with different objectives requires different \textbf{measure} of amenities.\par 
 	There are several popular measures:
 	\begin{itemize}
-		\item \textbf{Plain measure $q^p_{i}$.}\par 
+		\item \textbf{Density of POI within area $q^p_{i}$.}\par 
 		{\small This study employs the variety of of amenity type $p$ within grid \textit{i}}.
 		\item \textbf{Gravity-based accessibility measure}.\par 
 		{\small Considering the amenity type \textit{p} in the neighbors to the grid \textit{i}:}
@@ -94,25 +97,33 @@
 		\end{itemize}
 \end{frame}
 
-\begin{frame}{Potential problems}
-	There are some potential technical issues:
+\begin{frame}{Obstacles}
+	There are some potential problems:
 	\begin{itemize}
-		\item Local collinearity: it makes GWR fail in some cities.(Can be solved by employing gravity-based measure on some extent.)
-		\item Endogeneity: it can be the case that the population draw investors' attention to build amenities.
+		\item Correlations between amenities.
+		\item Local collinearity: it makes GWR fail in some cities.(Can be solved by employing gravity-based measure on some extent, and it will encounter with another problems)
+		\item Endogeneity: it can be the case that the population attracts investors to build amenities.
 		\item LASSO's limitation: the LASSO selection can suffer from several technical issues: like appearing to select only one variable from the correlated.
-		\item \textbf{The most tough problem now is the selection of decay function of accessibility measure.}
+	\end{itemize}
+	Employing the aforementioned \textbf{gravity-based accessibility} can be a good solution, however, we got additional problems for this:
+	\begin{itemize}
+	\item Employ which form of distance-based weight function $f(d_{ij})$.
+	\item As a study based on multiple cities, there maybe \textbf{no uniform} parameters for all cities.
 	\end{itemize}
 \end{frame}
-\begin{frame}{Analysis: important amenities (plain)}
-First and foremost, summarizing the LASSO's variable selection. I set the selection size as 6. The results are shown in the following table:
+\begin{frame}
+\textbf{Currently,} I employ the density of POI (first one) within area as the accessibility measure. In the later part, I partition the POIs regarding their functions.
+\end{frame}
+\begin{frame}{Analysis: important amenities}
+First and foremost, summarizing the LASSO's variable selection. I manually set the penalty term to make LASSO select 5 important variables. The results are shown in the following table:
 \begin{table}[]
 	\begin{tabular}{lr}\toprule
 		Amenity types & Frequency by LASSO \\
 		\hline 
 		Medical       & 33                 \\
-		Real estate   & 26                 \\
+		Real estate (mainly agencies)   & 26                 \\
 		Live-related  & 22                 \\
-		School        & 22                 \\
+		School (including tutoring centers)   & 22                 \\
 		Construction  & 18                \\\bottomrule
 	\end{tabular}
 \end{table}
@@ -158,9 +169,23 @@ The GWR performance with selected variables is stable among the sample period, e
 \begin{frame}{Statistic summary}
 	In all, there is no obvious changes in the variable statistics of six landuses.\par 
 	In addition, if we look at the city-level average of each coefficients, the change is not that significant as well.
-\end{frame}
-\begin{frame}{}
-	
+	\small
+\begin{table}[]
+	\begin{tabular}{l|ll|ll|ll|ll}\toprule
+		& \multicolumn{2}{c|}{Leisure} & \multicolumn{2}{c|}{Residence} & \multicolumn{2}{c|}{Traffic} & \multicolumn{2}{c}{Work} \\\midrule
+		Year & Mean       & Moran's I      & Mean            & Moran's I           & Mean       & Moran's I      & Mean      & Moran's I    \\\hline 
+		16   & 23.35      & 0.27           & 52.87           & 0.43                & 0.15       & 0.05           & 14.15     & 0.33         \\
+		19   & 20.01      & 0.28           & 47.99           & 0.43                & 0.14       & 0.06           & 12.73     & 0.32         \\
+		20   & 18.61      & 0.28           & 44.49           & 0.44                & 0.12       & 0.06           & 12.07     & 0.32         \\
+		22   & 17.98      & 0.28           & 43.50           & 0.44                & 0.12       & 0.06           & 11.80     & 0.32        \\\bottomrule
+	\end{tabular}
+\end{table}
+\normalsize
+{\textbf{Findings:}}\\
+\begin{itemize}
+	\item 
+	The number of POIs above gradually decrease without significant spatial pattern change.
+\end{itemize}
 \end{frame}
 \begin{frame}{Analysis framework}
 To the concern of potential heterogeneity between cities, I divide the 32 cities into top cities, including Tokyo, Nagoya, Yokohama, Osaka, Sapporo, and the other cities.\par 
@@ -172,35 +197,175 @@ To the concern of potential heterogeneity between cities, I divide the 32 cities
 	\item Do the changes related to the areas themselves. (Conlucded by correlation analysis between POI and coefficient changes.)
 \end{itemize}
 \end{frame}
-\begin{frame}{Shapley decomposition}
+\begin{frame}{How these POIs explain the population density?}
 	I decompose the R-squared of OLS regression of population density on the six-category land-use framework. The results are shown in the following:
 	\begin{figure}
-	\includegraphics[width=0.7\textwidth]{SD.png}
+	\includegraphics[width=0.7\textwidth]{SD_average.png}
 	\end{figure}	\end{frame}
-\begin{frame}{Coefficient changes: tokyo resi}
-\begin{figure}
-	\includegraphics[width=0.7\textwidth]{resi_tokyo.png}
-\end{figure}
+\begin{frame}{(Con'd) Grouped results}
+	\begin{figure}[h]
+		\centering
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{SD_top.png}
+			\caption{Top cities}
+			\label{fig:SD_top}
+		\end{minipage}
+		\hfill % adds horizontal space between the subfigures
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{SD_other.png}
+			\caption{The others}
+			\label{fig:SD_other}
+		\end{minipage}
+		\caption{Shapley decomposition for two groups}
+		\end{figure}	\end{frame}
+\begin{frame}{Finding from Shapley decomposition}
+
+{\large \textbf{Findings}:}
+\begin{itemize}
+	\item \textbf{Rank of importance: }These four kinds of POIs follow same order in both groups: \textit{residence$>$traffic$>$leisure$>$work}.
+	\item \textbf{Different importance for traffic POIs:} The \textit{traffic} type in 2nd position has different absolute explanatory power: higher ratio in the developed cities.
+	\item \textbf{Higher volatility in developed city's changes:} The change of explanatory power in developed cities are stronger than in the other cities. There are more sizable increase in the \textit{residence} and \textit{leisure} types, and decrease in \textit{traffic type}.
+\end{itemize}
 \end{frame}
-\begin{frame}{Coefficient changes: tokyo trans}
-	\begin{figure}
-		\includegraphics[width=0.7\textwidth]{trans_tokyo.png}
+\begin{frame}{GWR performance: overview}
+	The GWR regression is organized by the follow:
+	\begin{equation}
+	PopDen_{I}=\alpha_i+f(residence,work,leisure,traffic)_i+\epsilon
+	\end{equation}
+	Underlying the variables setting mentioned in the context, the GWR performance measured by the average R2 is shown in the following table:
+	
+\end{frame}
+\begin{frame}{Estimates and significance: \textit{work}}
+	\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{CEwork.png}
+		\caption{Coefficient of \textit{work}}
+		\label{fig:CE_work}
+	\end{minipage}
+	\hfill % adds horizontal space between the subfigures
+	\begin{minipage}[b]{0.49\textwidth}
+		\includegraphics[width=\textwidth]{SEwork.png}
+		\caption{Significance of \textit{work}}
+		\label{fig:SE_work}
+	\end{minipage}
+	\caption{Results of GWR: \textit{work}}
 	\end{figure}
 \end{frame}
-\begin{frame}{Coefficient changes: tokyo housing}
-	\begin{figure}
-		\includegraphics[width=0.7\textwidth]{housing_tokyo.png}
+\begin{frame}{Estimates and significance: residence}
+	\begin{figure}[h]
+		\centering
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{CEresi.png}
+			\caption{Coefficient of \textit{residence}}
+			\label{fig:CE_resi}
+		\end{minipage}
+		\hfill % adds horizontal space between the subfigures
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{SEresi.png}
+			\caption{Significance of \textit{residence}}
+			\label{fig:SE_resi}
+		\end{minipage}
+		\caption{Results of GWR: \textit{residence}}
 	\end{figure}
 \end{frame}
-\begin{frame}{Coefficient changes: tokyo leisure}
-	\begin{figure}
-		\includegraphics[width=0.7\textwidth]{leisure_tokyo.png}
+\begin{frame}{Estimates and significance: leisure}
+	\begin{figure}[h]
+		\centering
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{CEleisure.png}
+			\caption{Coefficient of \textit{leisure}}
+			\label{fig:CE_leisure}
+		\end{minipage}
+		\hfill % adds horizontal space between the subfigures
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{SEleisure.png}
+			\caption{Significance of \textit{leisure}}
+			\label{fig:SE_leisure}
+		\end{minipage}
+		\caption{Results of GWR: \textit{leisure}}
 	\end{figure}
 \end{frame}
-\begin{frame}{Coefficient changes: tokyo consum}
-	\begin{figure}
-		\includegraphics[width=0.7\textwidth]{consum_tokyo.png}
+\begin{frame}{Estimates and significance: traffic}
+	\begin{figure}[h]
+		\centering
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{CEtrans.png}
+			\caption{Coefficient of \textit{traffic}}
+			\label{fig:CE_trans}
+		\end{minipage}
+		\hfill % adds horizontal space between the subfigures
+		\begin{minipage}[b]{0.49\textwidth}
+			\includegraphics[width=\textwidth]{SEtrans.png}
+			\caption{Significance of \textit{traffic}}
+			\label{fig:SE_trans}
+		\end{minipage}
+		\caption{Results of GWR: \textit{traffic}}
 	\end{figure}
+\end{frame}
+\begin{frame}{General findings from GWR estimations}
+	For some general conclusions:
+	\begin{itemize}
+	\item The types \textit{residence}, \textit{leisure} and \textit{traffic} has similar evolution trends.
+	\item The top city group exhibits a more volatile movement.
+	\end{itemize}
+	In addition, we can get more stylized and interesting details that related to the lifestyle changes.
+\end{frame}
+\begin{frame}{Detailed findings from GWR estimations}
+		\begin{itemize}
+		\item \textbf{Traffic:}\par 
+		The population gradient to the traffic POI---revealed by the coefficient of \textit{traffic}--- becomes weaker, especially in the top cities. It can be explained by remote work, so that people become less favorable towards them. However, we can still observe a agglomeration towards traffic POI before and after the epidemic period.
+		\item \textbf{Work:}\\
+		Less population for increasing of work-related POI, which is consistent to the Traffic. Regarding the significance, the impacts become weaker by lower significance ratio.
+		\item \textbf{Residence:}\\
+		It becomes more important after the outbreak of pandemic and keep on becoming more important. The importance of \textit{residence} increase in 2020 and slightly decrease after the resilience.
+		\item \textbf{Leisure:}\\
+		The \textit{leisure} POI has a stable coefficients before and after the corresponding periods, but become weaker to attract people after the pandemic, in both groups.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Evolution patterns}
+	This part delves into the results at point-to-point level to discover and spatial traits of the coefficient evolution. I match the GWR results regarding their coordination, and do the following analysis:
+	\begin{itemize}
+\item \textbf{Significance:} I calculate the \textit{z} statistics to identify whether the coefficient change in specific location is statistically significant or not.
+\item \textbf{Spatial pattern: }I calculate the Moran's \textit{I} statistics to measure whether there are positive or negative spatial correlations.
+	\end{itemize}
+\end{frame}
+\begin{frame}{Point level change}
+	The significance check and z statistics are shown in the following table in the whole sample:
+	\begin{table}[]
+		\begin{tabular}{l|ll|ll|ll|ll}\toprule 
+			& \multicolumn{2}{c|}{Leisure}                                     & \multicolumn{2}{c|}{Residence}                                   & \multicolumn{2}{c|}{Traffic}                                     & \multicolumn{2}{c}{Work}                                        \\\midrule
+			\multicolumn{1}{c|}{Year} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c|}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c|}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c|}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} \\\hline 
+			16-19                    & -0.002                         & 0.101                          & -0.087                         & 0.120                          & 0.000                          & 0.053                          & 0.057                          & 0.042                          \\
+			19-20                    & 0.262                          & 0.077                          & -0.400                         & 0.126                          & -0.092                         & 0.028                          & 0.046                          & 0.042                          \\
+			20-22                    & 0.063                          & 0.028                          & -0.090                         & 0.029                          & -0.002                         & 0.027                          & -0.003                         & 0.016                          \\
+			19-22                    & 0.305                          & 0.097                          & -0.465                         & 0.125                          & -0.084                         & 0.055                          & 0.044                          & 0.053               \\\bottomrule          
+		\end{tabular}
+	\end{table}
+\end{frame}
+\begin{frame}{Point level change}
+	\small 
+\begin{table}[]
+	\begin{tabular}{lllllllll}\hline 
+	Top cities	& \multicolumn{2}{c}{Leisure}                                     & \multicolumn{2}{c}{Residence}                                   & \multicolumn{2}{c}{Traffic}                                     & \multicolumn{2}{c}{Work}                                        \\\hline 
+		\multicolumn{1}{c}{Year} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} \\\hline 
+		16-19                    & -0.075                         & 0.062                          & 0.069                          & 0.072                          & 0.103                          & 0.025                          & 0.062                          & 0.033                          \\
+		19-20                    & 0.454                          & 0.111                          & -0.596                         & 0.157                          & -0.165                         & 0.046                          & 0.085                          & 0.004                          \\
+		20-22                    & 0.093                          & 0.021                          & -0.115                         & 0.017                          & 0.016                          & 0.000                          & -0.073                         & 0.015                          \\
+		19-22                    & 0.538                          & 0.142                          & -0.704                         & 0.197                          & -0.151                         & 0.044                          & 0.003                          & 0.023                         \\\bottomrule
+	\end{tabular}\vspace{0.5em}
+	\begin{tabular}{lllllllll}\hline 
+	Other cities& \multicolumn{2}{c}{Leisure}                                     & \multicolumn{2}{c}{Residence}                                   & \multicolumn{2}{c}{Traffic}                                     & \multicolumn{2}{c}{Work}                                        \\\hline 
+	\multicolumn{1}{c}{Year} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} & \multicolumn{1}{c}{\textit{Z}} & \multicolumn{1}{c}{\textit{I}} \\
+	16-19                    & 0.009                          & 0.107                          & -0.110                         & 0.127                          & -0.016                         & 0.057                          & 0.057                          & 0.044                          \\
+	19-20                    & 0.234                          & 0.072                          & -0.371                         & 0.121                          & -0.081                         & 0.026                          & 0.040                          & 0.048                          \\
+	20-22                    & 0.059                          & 0.029                          & -0.087                         & 0.031                          & -0.004                         & 0.031                          & 0.008                          & 0.016                          \\
+	19-22                    & 0.271                          & 0.090                          & -0.430                         & 0.114                          & -0.074                         & 0.056                          & 0.050                          & 0.057                 \\\hline         
+	\end{tabular}
+\end{table}
+\end{frame}
+\begin{frame}{Spatial correlation (TBD)}
+	Here, I show the spatial correlation measured by Moran's I of the z statistics.
 \end{frame}
 
 	%----------------------------------------------------------------------------------------
